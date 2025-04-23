@@ -8,12 +8,15 @@
 //  Category: 
 //   History: 
 //------------------------------------------------
-
+const uint VERSION_MHRSB = 2818730;
+const uint VERSION_RE4 = 3539837;
+local uint VERSION = Atoi(StrDel(FileNameGetExtension(GetFileName()),0,1));
+#include "RE_EFX_TYPES.btx"
 // --------------  
 // OPTIONS
 
-local string    DEFAULT_COLOR = "240,40,40,999";
-local string    DEFAULT_SECONDARY_COLOR = "220,20,20,999";
+local string    DEFAULT_COLOR = "40,240,40,999";
+local string    DEFAULT_SECONDARY_COLOR = "20,220,20,999";
 ubyte SET_PRIMARY = TRUE;
 ubyte SET_SECONDARY = TRUE;//Change secondary color of struct if present
 //Set to FALSE to not change the color of the struct
@@ -33,16 +36,24 @@ ubyte       CHANGE_TypeNodeBillboard = TRUE;
 ubyte       CHANGE_TypeMesh = TRUE;
 ubyte       CHANGE_TypePolygon = TRUE;
 ubyte       CHANGE_TypeRibbonChain = TRUE;
+ubyte       CHANGE_TypeRibbonLength = TRUE;
 ubyte       CHANGE_TypeRibbonFixEnd = TRUE;
 ubyte       CHANGE_TypeRibbonLightweight = TRUE;
 ubyte       CHANGE_TypeStrainRibbon = TRUE;
 
+ubyte       CHANGE_unknRE4Struct243_UnknGPUBillboard = TRUE;
+ubyte       CHANGE_unknRE4Struct247_UnknTypeGPU = TRUE;
+ubyte       CHANGE_unknRE4Struct226 = TRUE;
+ubyte       CHANGE_unknRE4Struct245_UnknType = TRUE;
+ubyte       CHANGE_unknRE4Struct249_UnknTypeB = TRUE;
 // --------------  
 
 //Do not change anything below this point unless you know what you're doing
 
 
 uint SCRIPTVERSION = 1;
+
+
 ubyte checkColorAttribute(string structName)
 {
     local ubyte result = FALSE;
@@ -160,6 +171,13 @@ ubyte checkColorAttribute(string structName)
                         result = TRUE;
                     }
             };break;
+            case "TypeRibbonLength":
+            {
+                    if(CHANGE_TypeRibbonLength)
+                    {
+                        result = TRUE;
+                    }
+            };break;
             case "TypeStrainRibbon":
             {
                     if(CHANGE_TypeStrainRibbon)
@@ -181,10 +199,46 @@ ubyte checkColorAttribute(string structName)
                         result = TRUE;
                     }
             };break;
+            case "unknRE4Struct243_UnknGPUBillboard":
+            {
+                    if(CHANGE_unknRE4Struct243_UnknGPUBillboard)
+                    {
+                        result = TRUE;
+                    }
+            };break;
+
+            case "unknRE4Struct247_UnknTypeGPU":
+            {
+                    if(CHANGE_unknRE4Struct247_UnknTypeGPU)
+                    {
+                        result = TRUE;
+                    }
+            };break;
+            case "unknRE4Struct226":
+            {
+                    if(CHANGE_unknRE4Struct226)
+                    {
+                        result = TRUE;
+                    }
+            };break;
+            case "unknRE4Struct245_UnknType":
+            {
+                    if(CHANGE_unknRE4Struct245_UnknType)
+                    {
+                        result = TRUE;
+                    }
+            };break;
+            case "unknRE4Struct249_UnknTypeB":
+            {
+                    if(CHANGE_unknRE4Struct249_UnknTypeB)
+                    {
+                        result = TRUE;
+                    }
+            };break;
     }
     return result;
 }
-Printf("MH Rise Sunbreak EFX Color Change Script V%i\nhttps://github.com/NSACloud/MHR-EFX-Template\n",SCRIPTVERSION);
+Printf("RE Engine EFX Color Change Script V%i\nhttps://github.com/NSACloud/RE-Engine-EFX-Template\n",SCRIPTVERSION);
 local int i;
 local int j;
 local int k;
@@ -221,7 +275,7 @@ for(i=main_efxr.header.entryCount-1;i>=0;i--)
 	{
 		for(j=main_efxr.mainBody.entry[i].attributeCount-1;j>=0;j--)
 	    {
-            itemEnum = EnumToString(main_efxr.mainBody.entry[i].attribute[j].itemType);
+            itemEnum = GetEFXStructName(main_efxr.mainBody.entry[i].attribute[j].itemType);
             if (checkColorAttribute(itemEnum))
             {
                 Printf("Changed EFX Entry %i (%s) - %s\n",i,main_efxr.strings.efx_name[i].str,itemEnum);
@@ -288,7 +342,7 @@ for(i=main_efxr.header.entryCount-1;i>=0;i--)
 for(i=main_efxr.header.actionCount-1;i>=0;i--)
 	{
         currentSizeDifference = 0;
-        if (EnumToString(main_efxr.action[i].attribute.itemType) == "PlayEmitter")
+        if (exists(main_efxr.action[i].attribute.action_efxr))
         {
             
             
@@ -296,7 +350,7 @@ for(i=main_efxr.header.actionCount-1;i>=0;i--)
 	        {
                 for(k=main_efxr.action[i].attribute.action_efxr.mainBody.entry[j].attributeCount-1;k>=0;k--)
 	                {
-                        itemEnum = EnumToString(main_efxr.action[i].attribute.action_efxr.mainBody.entry[j].attribute[k].itemType);
+                        itemEnum = GetEFXStructName(main_efxr.action[i].attribute.action_efxr.mainBody.entry[j].attribute[k].itemType);
                         if (checkColorAttribute(itemEnum))
                         {
                             Printf("Changed Action %i EFX Entry %i (%s) - %s\n",i,j,main_efxr.action[i].attribute.action_efxr.strings.efx_name[j].str,itemEnum);

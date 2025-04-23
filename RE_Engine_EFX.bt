@@ -1,0 +1,2582 @@
+//------------------------------------------------
+//--- 010 Editor v10.0.1 Binary Template
+//
+//      File: 
+//   Authors: NSA Cloud
+//   Version: V1
+//   Purpose: RE Engine EFX
+//  Category: 
+// File Mask: *.efxpreset,*.efx.1769669,*.efx.1769672,*.efx.2621987,*.efx.2818689,*.efx.2818730,*.efx.3474371,*.efx.3539837,*.efx.4064419
+//  ID Bytes: 
+//   History: 
+/*
+
+    
+    RE4
+
+    ------
+    V1 4/23/2025
+
+    Support added for most structs in RE4.
+    Template rewritten to support more games. Currently supports MHR and RE4.
+
+    Note that this version of the template is temporary and will become obsolete when the new version for MH Wilds is released.
+
+    This version is only intended for RE4, the new one will have support for wilds and more.
+
+
+    V0 4/14/2023
+	-----
+    Beta release. Many structs have not been mapped yet.
+    Most of the structs have already been mapped for MHR. It's just a case of deducing how the item enum has shifted.
+    The template will print an item type number when it runs into a struct that hasn't been mapped yet.
+    If the item type number is a sane number (<255), you just have to figure out what that number was on the MHR efx template and how it's been changed.
+
+    MHRISE
+    ------------
+    V7 1/15/2023
+	-----
+    Usability Improvements:
+    -   EFX entries can now be parented to a bone easily by entering a bone name in ParentOptions attributes. 
+        The template will handle all of the necessary changes to make it work.
+	
+    Labeled more color attributes
+    Labeled some unknowns related to collision effects
+	-----
+	V6 7/1/2022
+	-----
+	Reworked template structure to allow for iteration over attributes.
+	Moved field parameters to be parsed after actions
+	Changed unkn8 in header to unknFlag
+	-----
+	V5 6/25/2022
+	-----
+	Added full sunbreak update support. New structs added. All efx files in sunbreak should work upon release.
+	Added path entry to field parameters
+	Droppped support for pre sunbreak update efx. Use the pre sunbreak efx template for pre sunbreak efx.
+	-----
+
+	V4 5/29/2022
+	-----
+	Template now works on all efx files in the game (As of pre Sunbreak expansion)
+	Added used values for all variables as comments on the template to make mapping their function easier
+	Automated data type mapping for unknown variables
+	Changed item type to an enum to make porting the template between games easier
+	Changed "Parent Options relation" to "Bone Attribute relation", any efx attributes that use bones have a bone attribute relation entry
+	Changed unknParameter to expressionParameter
+	Moved field parameter values into subheader
+	Template forces endian mode to little endian to prevent issues
+	-----
+
+	V3 2/11/2022
+	-----
+	Changed unknEFXValue in subheader to efxParentOptionsRelation
+		- Now displays efx entry that the relation entry is associated with
+	Changed unkn1 in ParentOptions to isUsingBone
+	-----
+
+	V2 4/24/2021
+	-----
+	Fixed missing float on TypeRibbonFollow. 
+	Labeled unknowns for Life, UVSequence, Spawn, TypeMesh - Thank you to thezippotm and Crimson 
+	-----
+*/
+
+//------------------------------------------------
+//GitHub: https://github.com/NSACloud/RE-Engine-EFX-Template
+//Monster Hunter Modding Discord: https://discord.gg/gJwMdhK
+LittleEndian();
+
+//EFX VERSIONS
+const uint VERSION_RE2 = 1769669;
+const uint VERSION_DMC5 = 1769672;
+const uint VERSION_MHR = 2621987;
+const uint VERSION_RE8 = 2621998;
+const uint VERSION_RERT = 2818689;
+const uint VERSION_MHRSB = 2818730;
+const uint VERSION_SF6 = 3474371;
+const uint VERSION_RE4 = 3539837;
+const uint VERSION_DD2 = 4064419;
+
+
+//
+local uint TEMPLATEVERSION = 0;
+local uint VERSION = Atoi(StrDel(FileNameGetExtension(GetFileName()),0,1));
+Printf("EFX Version %i\n",VERSION);
+
+switch(VERSION)
+{
+    case VERSION_RE2:
+    {
+        Printf("Resident Evil 2 Non RT\nNOTE: GAME IS NOT SUPPORTED BY THE TEMPLATE YET\n");
+        break;
+    }
+    case VERSION_DMC5:
+    {
+        Printf("Devil May Cry 5\nNOTE: GAME IS NOT SUPPORTED BY THE TEMPLATE YET\n");
+        break;
+    }
+    case VERSION_MHR:
+    {
+        Printf("Monster Hunter Rise Pre Subreak Update\n");
+        break;
+    }
+    case VERSION_RE8:
+    {
+        Printf("Resident Evil 8\nNOTE: GAME IS NOT SUPPORTED BY THE TEMPLATE YET\n");
+        break;
+    }
+    case VERSION_RERT:
+    {
+        Printf("Resident Evil 2 RT\nNOTE: GAME IS NOT SUPPORTED BY THE TEMPLATE YET\n");
+        break;
+    }
+    case VERSION_MHRSB:
+    {
+        Printf("Monster Hunter Rise Sunbreak\n");
+        break;
+    }
+    case VERSION_SF6:
+    {
+        Printf("Street Fighter 6\nNOTE: GAME IS NOT SUPPORTED BY THE TEMPLATE YET\n");
+        break;
+    }
+    case VERSION_RE4:
+    {
+        Printf("Resident Evil 4\n");
+        break;
+    }
+    case VERSION_DD2:
+    {
+        Printf("Dragon's Dogma 2\nNOTE: GAME IS NOT SUPPORTED BY THE TEMPLATE YET\n");
+        break;
+    }
+
+}
+
+#include "RE_EFX_TYPES.btx"
+#include "RE_EFX_ENUMS.btx"
+
+/*
+
+NOTES:
+Set the character set to UTF-8 in View > Character Set
+
+If you map any of the unknowns, submit a pull request or issue on GitHub and I'll add the changes.
+
+*/
+
+//UTILITY STRUCTS
+typedef struct
+{
+    
+	ubyte red<fgcolor=0x0000FF>;
+	ubyte green<fgcolor=0x00FF00>;
+	ubyte blue<fgcolor=0xFF0000>;
+	ubyte alpha<fgcolor=0xAAAAAA>;
+
+}Color<read=ReadColor,optimize=false>;
+
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+}Vec3<read=ReadVec3>;
+
+typedef struct
+{
+	float x;
+	float y;
+}Vec2;
+
+typedef struct
+{
+	int x;
+	int y;
+	int z;
+}Int3<read=ReadInt3>;
+
+typedef struct
+{
+    int value;
+    int valueRandom;
+}Int2<read=ReadInt2>;
+typedef struct
+{
+	int s;
+	int r;
+}RangeI;
+void ReadEFXAttribute()
+{
+	local uint itemType = ReadUInt();
+	GetEFXItemStruct(GetEFXStructName(itemType));
+}
+
+
+
+
+typedef struct
+{
+	char type[4];
+	int unkn0;//constant
+	uint entryCount<bgcolor=0x22AA22>;
+	uint entryLength<bgcolor=0x22AA22>;
+	uint actionCount;
+	uint fieldParameterCount;//Amount of "Field" efx attributes
+	uint expressionParameterCount<bgcolor=0x226622>;
+	uint collisionEffectCount<bgcolor=0x224422>;
+	uint collisionEffectLength;
+    if (VERSION > VERSION_DMC5)
+    {
+        uint boneCount<bgcolor=0x226622>;
+	    uint boneAttributeEntryCount;
+	    uint unknFlag;//Mainly used in cutscene efx, not sure of it's purpose. Example: vfx\editor\efd_evc\efd_evc1508\efd_0004_evc1508_00_0035.efx.2818730
+    }
+	
+}Header<optimize = false, bgcolor=0x2f4f4f>;
+typedef struct
+{
+	string str;
+}EntryName<bgcolor=0x22AA22,optimize=false>;
+typedef struct
+{
+	string str;
+	wstring unicodeStr;
+}UnicodeEntryName<bgcolor=0x226622,optimize=false>;
+
+typedef struct 
+{       
+		if (header.expressionParameterCount > 0)
+		UnicodeEntryName expression_parameter_name[header.expressionParameterCount]<read=ReadUnicodeEntry>;
+		if (VERSION > VERSION_DMC5 && header.boneCount > 0)
+		UnicodeEntryName bone_name[header.boneCount]<read=ReadUnicodeEntry>;
+		if (header.actionCount > 0)
+		EntryName action_name[header.actionCount]<read=ReadStr>;
+		if (header.fieldParameterCount > 0)
+		EntryName field_parameter_name[header.fieldParameterCount]<read=ReadStr>;
+		if (header.entryCount > 0)
+		EntryName efx_name[header.entryCount]<read=ReadStr>;
+		if (header.collisionEffectCount > 0)
+		EntryName collision_effect_name[header.collisionEffectCount]<read=ReadStr>;
+}EntryNames;
+typedef struct 
+{
+	local int entryIndex = -999;
+    local int attributeIndex = -999;
+	short boneNameIndex;
+}boneAttributeRelation<optimize = false>;
+
+typedef struct
+{
+	local uint currentEntryIndex = parentof(this).i;
+	uint expressionParameterNameUTF16Hash;
+	uint expressionParameterNameUTF8Hash;
+	uint unkn2;
+	int unkn3;
+	uint unkn4;
+	uint unkn5;
+}ExpressionParameterValue<read=ReadExpressionParameter>;
+
+typedef struct 
+{
+	local int i;
+	for(i=0;i<header.expressionParameterCount;i++)
+	{
+		ExpressionParameterValue expressionParameter;
+	}
+	
+}ExpressionParameterValues;
+typedef struct
+{
+	local uint currentEntryIndex = parentof(this).i;
+	uint boneNameHash;
+	uint unknBoneValue;
+}BoneValue<read=ReadBoneValue>;
+
+typedef struct 
+{
+	local int i;
+	for(i=0;i<header.boneCount;i++)
+	{
+		BoneValue boneValue;
+	}
+	
+}BoneValues;
+typedef struct
+{
+	local uint currentEntryIndex = parentof(this).i;
+	uint unkn0;
+	uint fieldParameterNameHash;
+	uint unkn2;
+	uint type;
+	uint unkn4;
+	uint unkn5;
+	uint unkn6;
+	uint unkn7;
+	float unkn8;
+	float unkn9;
+	float unkn10;
+	if (type == 110 || type == 184 || type == 202 || type == 194)
+	{
+		uint pathUnicodeCharCount;
+		wstring filePath;
+	}
+}FieldParameterValue<read=ReadFieldParameter>;
+
+typedef struct 
+{
+	local int i;
+	for(i=0;i<header.fieldParameterCount;i++)
+	{
+		FieldParameterValue fieldParameter;
+	}
+	
+}FieldParameterValues;
+
+typedef struct
+{
+	
+	if (header.expressionParameterCount != 0)
+	{
+		ExpressionParameterValues expressionParameterValues;
+	}
+
+	 if (VERSION > VERSION_DMC5 && header.boneCount != 0)
+	{
+		BoneValues boneValues;
+	}
+    
+    if (VERSION > VERSION_DMC5)
+    {
+        struct
+	    {
+		    boneAttributeRelation relation[header.boneAttributeEntryCount]<read = ReadBoneAttributeRelation>;
+	    }boneAttributeRelations;
+    }
+	
+	
+}SubHeader<optimize = false,bgcolor=0xffdddd>;
+typedef struct
+{
+	uint actionUnkn0;
+	uint actionNameHash;
+	uint actionAttributeCount;
+	ReadEFXAttribute();
+}Action;
+
+typedef struct
+{
+	local uint currentEntryIndex = parentof(this).i;
+	uint entryIndex;
+	uint effectNameHash;
+	enum EFXEntryHeaderEnum {AssignToCollisionEffect = 0, NoAssignment = 2} efxEntryAssignment;   
+	int attributeCount<bgcolor=0x00dddd>;
+	local int i;
+	for(i=0;i<attributeCount;i++)//EFX attributes are sorted by their item type value
+	{
+		ReadEFXAttribute();
+        attribute[i].currentAttributeIndex = i;
+	}
+}EFXEntry<bgcolor=0x000000,read=ReadEFXEntry>;
+
+typedef struct
+{
+local int i;
+	for(i=0;i<header.entryCount;i++)
+	{
+		EFXEntry entry;
+	}
+}EFXEntries;
+typedef struct
+{
+	local uint currentEntryIndex = parentof(this).i;
+	uint conditionalEffectGroupNameHashUTF16;
+	uint conditionalEffectGroupNameHashUTF8;
+	uint valueCount;
+	uint efxEntryIndex[valueCount];
+}CollisionEffect<read=ReadCollisionEffect>;
+
+typedef struct 
+{
+	local int i;
+	for(i=0;i<header.collisionEffectCount;i++)
+	{
+		CollisionEffect collisionEffect<optimize=false>;
+	}
+	
+}CollisionEffects;
+
+typedef struct
+{
+	uint uvarStringCount;//This seems to be a count of uservariable strings on the end of the file
+	ubyte eof[4];
+
+	//Some files have the uvarString count higher than 0 but have no strings.
+	//Uncomment the section below to test it
+	
+	/*
+	if (uvarStringCount != 0)
+	{
+		struct
+		{
+			uint stringLength;
+			wstring uvarString;
+		}uvarString[uvarStringCount]<optimize=false>;
+	}
+	*/
+}EOF<bgcolor=0x000000>;
+
+
+void updateBoneAttributeRelations(Header& header,SubHeader& subheader,EFXEntries& mainBody){
+	local int currentRelationIndex = 0;
+	local int i;
+	local int j;
+	//Printf("%i\n",header.entryCount);
+	for(i=0;i<header.entryCount;i++)
+	{    
+		for(j=0;j<mainBody.entry[i].attributeCount;j++)
+		{
+			switch(GetEFXStructName(mainBody.entry[i].attribute[j].itemType))
+			{
+				case "ParentOptions":
+				case "VanishArea3D":
+				case "TypeStrainRibbon":
+				case "Attractor":
+				case "TypeLightning3D":
+				{
+					subheader.boneAttributeRelations.relation[currentRelationIndex].entryIndex = i;
+                    subheader.boneAttributeRelations.relation[currentRelationIndex].attributeIndex = j;
+					currentRelationIndex++; 
+				}break;
+				default:
+				{
+
+				}
+			}
+		}           			
+	}
+};
+
+typedef struct
+{
+	Header header;
+    local int stringStartPos = FTell();
+	EntryNames strings<optimize=false>;
+    if (header.entryLength != FTell() - stringStartPos)
+    {
+        Warning("Warning - Entry length in header does not match actual entry length!");
+        Printf("Warning - Entry length in header does not match actual entry length!\nActual Length:%i\nExpected Length:%i\n",FTell()-stringStartPos,header.entryLength);
+    } 
+
+	SubHeader subheader;
+	if (header.actionCount != 0)
+	{
+		Action action[header.actionCount]<optimize=false, bgcolor=0x0000FF>;
+	}
+	if (header.fieldParameterCount != 0)
+	{
+		FieldParameterValues fieldParameterValues<optimize=false, bgcolor=0xAAFFAA>;
+	}
+	EFXEntries mainBody;
+	updateBoneAttributeRelations(header,subheader,mainBody);
+	if (header.collisionEffectCount != 0)
+	{
+		CollisionEffects collisionEffects<bgcolor=0xEEBBEE>;
+	}
+	
+	EOF eof;
+	
+}EFXR<optimize=false>;
+
+//Presets for EFX Editor
+typedef struct
+{
+	uint magic;
+    uint presetVersion;
+    enum <uint> 
+    {
+        Preset_Attribute = 0,
+        Preset_Entry = 1,
+        Preset_EntryGroup = 2    
+    }presetType;
+    uint efxVersion;
+    VERSION = efxVersion;
+    int expressionParameterCount;
+    int fieldParameterCount;
+    int entryCount;
+}EFXPresetHeader<bgcolor=0x7f21fa>;
+
+
+typedef struct
+{
+    uint stringLength;
+    wstring str;
+}PascalCString<read=ReadPascalCString>;
+
+string ReadPascalCString(PascalCString& input){
+	string s;
+	SPrintf(s, "%s", input.str);
+	return s;
+};
+typedef struct
+{
+	
+    PascalCString presetName;
+    PascalCString presetCategory;
+    PascalCString presetDescription;
+    uint tagCount;
+    PascalCString tags[tagCount]<optimize = false>;
+    uint imageLength;
+    if (imageLength > 0)
+    {
+        ubyte imageData[imageLength]<optimize = false>;
+    }
+}EFXPresetInfo<bgcolor=0xf4d65c>;
+
+typedef struct
+{
+	if (header.expressionParameterCount != 0)
+    {
+        EntryName expression_parameter_name[header.expressionParameterCount];
+    }
+    if (header.fieldParameterCount != 0)
+    {
+        EntryName field_parameter_name[header.fieldParameterCount];
+    }
+    if (header.entryCount != 0)
+    {
+        EntryName efx_name[header.entryCount];
+    }
+}EFXPresetEntryNames;
+
+
+typedef struct
+{
+	EFXPresetHeader header;
+    EFXPresetInfo presetInfo;
+    if(header.presetType != 0)
+    {
+        EFXPresetEntryNames strings;
+    }
+    local int i = 0;
+    if (header.expressionParameterCount != 0)
+    {
+        ExpressionParameterValues expressionParameterValues;
+    }
+    if (header.fieldParameterCount != 0)
+    {
+        FieldParameterValues fieldParameterValues;
+    }
+    
+    if (header.presetType == Preset_Attribute)
+    {
+        ReadEFXAttribute();
+    }
+    else
+    {
+        EFXEntries mainBody<optimize = false>;
+    }
+    
+}EFXPreset;
+
+//EFX STRUCTS
+
+#include "RE_EFX_STRUCTS.btx"
+//READ FUNCTIONS
+
+string ReadBoneAttributeRelation(boneAttributeRelation& input){
+	string s;
+	if (input.entryIndex != -999)
+	{
+		SPrintf(s, "%i, %s",input.boneNameIndex,parentof(parentof(parentof(input))).strings.efx_name[input.entryIndex].str);
+	    SPrintf(s, "%i, %s - %s",input.boneNameIndex,parentof(parentof(parentof(input))).strings.efx_name[input.entryIndex].str,GetEFXStructName(parentof(parentof(parentof(input))).mainBody.entry[input.entryIndex].attribute[input.attributeIndex].itemType));
+    }
+	else
+	{
+		s = "Failed to finish parsing efxr, it is likely that a struct that uses bones hasn't been marked as a struct that uses bones";
+	}
+	return s;
+};
+
+string ReadStr(EntryName& input){
+	string s;
+	SPrintf(s, "%s", input.str);
+	return s;
+};
+string ReadUnicodeEntry(UnicodeEntryName& input){
+	string s;
+	SPrintf(s, "%s", input.str);
+	return s;
+};
+string ReadVec3(Vec3& input){
+	string s;
+	SPrintf(s, "X:%f Y:%f Z:%f", input.x,input.y,input.z);
+	return s;
+};
+string ReadInt2(Int2& input){
+	string s;
+	SPrintf(s, "%i ~ %i", input.value,input.valueRandom);
+	return s;
+};
+string ReadInt3(Int3& input){
+	string s;
+	SPrintf(s, "X:%i Y:%i Z:%i", input.x,input.y,input.z);
+	return s;
+};
+string ReadColor(Color& input){
+	string s;
+	SPrintf(s, "RGBA: %u,%u,%u,%u", input.red,input.green,input.blue,input.alpha);
+	return s;
+};
+string ReadEFXEntry(EFXEntry& input){
+	string s;
+	SPrintf(s, "%s", parentof(parentof(input)).strings.efx_name[input.currentEntryIndex].str);
+	return s;
+};
+string ReadFieldParameter(FieldParameterValue& input){
+	string s;
+	SPrintf(s, "%s", parentof(parentof(input)).strings.field_parameter_name[input.currentEntryIndex].str);
+	return s;
+};
+string ReadExpressionParameter(ExpressionParameterValue& input){
+	string s;
+	SPrintf(s, "%s", parentof(parentof(parentof(input))).strings.expression_parameter_name[input.currentEntryIndex].str);
+	return s;
+};
+string ReadBoneValue(BoneValue& input){
+	string s;
+	SPrintf(s, "%s", parentof(parentof(parentof(input))).strings.bone_name[input.currentEntryIndex].str);
+	return s;
+};
+string ReadCollisionEffect(CollisionEffect& input){
+	string s;
+	SPrintf(s, "%s", parentof(parentof(input)).strings.collision_effect_name[input.currentEntryIndex].str);
+	return s;
+};
+
+//STRUCT READ FUNCTIONS
+string getPtBehaviorEnumValue(string enumName,uint enumValue)
+{
+    string name;
+    switch(enumName)
+    {
+        case "snow.wwise.SnowSoundEffectTypeEvent._Type":
+        {
+            switch(enumValue)
+            {
+                case 0:{name="Fire";break;}
+                case 1:{name="Water";break;}
+                case 2:{name="Elec";break;}
+                case 3:{name="Ice";break;}
+                case 4:{name="Dragon";break;}
+                case 5:{name="Poison";break;}
+                case 6:{name="Paralyze";break;}
+                case 7:{name="Sleep";break;}
+                case 8:{name="StaminaDown";break;}
+                case 9:{name="Blast";break;}
+                case 10:{name="BlastLv2";break;}
+                case 11:{name="Pooh";break;}
+                case 12:{name="Anesthesia";break;}
+                case 13:{name="Critical";break;}
+                case 14:{name="Negative";break;}
+                case 15:{name="Stun";break;}
+                case 16:{name="Mystery";break;}
+                default:{name="Unknown Enum Value";break;}
+
+            }
+            break;
+        }
+        default:
+        {
+            name = "Unknown Enum";
+        }
+    }
+    return name;
+}
+
+string ReadPtBehaviorEnum(uint& input){
+	string s;
+    SPrintf(s, "%s.%s",parentof(parentof(input)).behaviorString,parentof(input).behaviorPropertyString);
+    SPrintf(s, "%i (%s)",input,getPtBehaviorEnumValue(s,input));
+	return s;
+};
+
+
+
+void writeErrorToFile(int errorNum)//debug
+{   
+	//Uncomment to write failed structs to a file when an error occurs
+
+	/*
+
+	local string errorOutputPath = "F:\\MHR_EXTRACT\\efxErrorList.csv";
+	local int currentFile = GetFileNum();
+	local string s;
+	SPrintf(s,"%i,%s\n",errorNum,GetFileName());
+	
+	if (FileExists(errorOutputPath))
+	{
+		FileSelect(FileOpen(errorOutputPath,false));
+	}
+	else
+	{
+		FileSelect(FileNew());
+	}
+	
+	WriteString(FileSize(),s);
+	FileSave(errorOutputPath);
+	FileSelect(currentFile);
+
+	*/
+
+	if (errorNum == 999)
+	{
+		uint64 STRUCT_ERROR<bgcolor=0x0000FF,fgcolor=0x000000,comment="One of the previous structs is wrong. If this is an unchanged file, please report it.">;
+	}
+	else
+	{
+		uint64 UNMAPPED_STRUCT<bgcolor=0x0000FF,fgcolor=0x000000,comment="Struct ID is unmapped. Check that the previous struct is correct before mapping it.">;
+	}
+	Exit(errorNum);
+}
+
+//HASHING
+//Murmur3 hash generation by Darkness:
+uint32 fmix32(uint32 h){
+    h ^= h >> 16;
+    h *= 0x85ebca6b;
+    h ^= h >> 13;
+    h *= 0xc2b2ae35;
+    h ^= h >> 16;
+    return h;
+}
+
+uint32 mmh3 (byte key[], uint32 length , uint32 seed){
+    local uint64 block_start<hidden=true>;
+    local const uint nBlocks = length / 4;
+    local uint32 h1 = seed;
+    
+    local const uint32 c1 = 0xcc9e2d51;
+    local const uint32 c2 = 0x1b873593;
+
+    local uint32 k1;
+    for(block_start = 0; block_start < nBlocks * 4; block_start+= 4){
+        k1 = (uint32)key[block_start + 3] << 24 | \
+             (uint32)key[block_start + 2] << 16 | \
+             (uint32)key[block_start + 1] << 8 | \
+             (uint32)key[block_start + 0];
+
+        k1 = (c1 * k1) & 0xFFFFFFFF;
+        k1 = (k1 << 15 | k1 >> 17) & 0xFFFFFFFF;
+        k1 = (c2 * k1) & 0xFFFFFFFF;
+
+        h1 ^= k1;
+        h1 = (h1 << 13 | h1 >> 19) & 0xFFFFFFFF;
+        h1 = (h1 * 5 + 0xe6546b64) & 0xFFFFFFFF;
+    }
+
+    local uint32 tail_index = nBlocks * 4;
+    k1 = 0;
+    local uint32 tail_size = length & 3;
+
+    if(tail_size >= 3)
+        k1 ^= (uint32)key[tail_index + 2] << 16;
+    if(tail_size >= 2)
+        k1 ^= (uint32)key[tail_index + 1] << 8;
+    if(tail_size >= 1)
+        k1 ^= (uint32)key[tail_index + 0];
+
+    if(tail_size > 0){
+        k1 = (k1 * c1) & 0xFFFFFFFF;
+        k1 = (k1 << 15 | k1 >> 17) & 0xFFFFFFFF;
+        k1 = (k1 * c2) & 0xFFFFFFFF;
+        h1 ^= k1;
+    }
+
+    return fmix32(h1 ^ length);
+}
+
+uint32 hash_wide(string key){
+    local uint64 it<hidden=true>;
+    local const uint length = Strlen(key) * 2;
+    if (length) {
+        local byte key_array[length];
+        for(it = 0; it < length; it += 2){
+            key_array[it] = key[it / 2];
+            key_array[it + 1] = 0;
+        }
+        return mmh3(key_array, length, 0xFFFFFFFF);
+    } return 0;
+}
+
+
+
+
+
+//SPECIFIC READ FUNCTIONS
+
+string ReadUVSequence(UVSequence& input){
+	string s;
+	SPrintf(s, "%s", input.uvsPath);
+	return s;
+}
+string ReadEffectOptimizeShader(EffectOptimizeShader& input){
+	string s;
+	SPrintf(s, "%s", input.shaderPath);
+	return s;
+}
+string ReadTypeMesh(TypeMesh& input){
+	string s;
+	SPrintf(s, "%s", input.meshPath);
+	return s;
+}
+
+string ReadTypeGpuMesh(TypeGpuMesh& input){
+	string s;
+	SPrintf(s, "%s", input.meshPath);
+	return s;
+}
+string ReadPtBehavior(PtBehavior& input){
+	string s;
+	SPrintf(s, "%s", input.behaviorString);
+	return s;
+}
+string ReadBoneParentOptions(ParentOptions& input){
+	string s;
+    string extra = "";
+    if (input.boneNameLength == 2)
+    {
+        s = "None";
+    }
+    else
+    {
+        s = input.boneName;
+        extra = "Enter \"None\" to unparent.";
+    }
+	SPrintf(s, "Parent: %s | Enter a bone name here to set the parent. %s", s, extra);
+	return s;
+}
+
+string ReadBoneAttractor(Attractor& input){
+	string s;
+    string extra = "";
+    if (input.boneNameLength == 2)
+    {
+        s = "None";
+    }
+    else
+    {
+        s = input.boneName;
+        extra = "Enter \"None\" to detach.";
+    }
+	SPrintf(s, "Attachment Point: %s | Enter a bone name here to set the attachment bone. %s", s, extra);
+	return s;
+}
+
+string ReadBoneVanishArea3D(VanishArea3D& input){
+	string s;
+    string extra = "";
+    if (input.boneNameLength == 2)
+    {
+        s = "None";
+    }
+    else
+    {
+        s = input.boneName;
+        extra = "Enter \"None\" to detach.";
+    }
+	SPrintf(s, "Attachment Point: %s | Enter a bone name here to set the attachment bone. %s", s, extra);
+	return s;
+}
+
+string ReadBoneTypeStrainRibbon(TypeStrainRibbon& input){
+	string s;
+    string extra = "";
+    if (input.boneNameLength == 2)
+    {
+        s = "None";
+    }
+    else
+    {
+        s = input.boneName;
+        extra = "Enter \"None\" to detach.";
+    }
+	SPrintf(s, "Attachment Point: %s | Enter a bone name here to set the attachment bone. %s", s, extra);
+	return s;
+}
+
+string ReadBoneTypeLightning3D(TypeLightning3D& input){
+	string s;
+    string extra = "";
+    if (input.boneNameLength == 2)
+    {
+        s = "None";
+    }
+    else
+    {
+        s = input.boneName;
+        extra = "Enter \"None\" to detach.";
+    }
+	SPrintf(s, "Attachment Point: %s | Enter a bone name here to set the attachment bone. %s", s, extra);
+	return s;
+}
+
+//SPECIFIC WRITE FUNCTIONS
+
+//010 doesn't let you pass different structs for the same write function so the function has to be duplicated for each struct
+void WriteBoneParentOptions(ParentOptions& input, string s){
+    local uint boneNameStart = startof(input.boneName);
+    local uint newStringSize = sizeof(s)*2;
+    local string oldBoneName = input.boneName;
+    if (s != "None" && s != "\"None\"" && s != "")
+    {
+        //Remove bone name from attribute and replace it with the new name
+        DeleteBytes(boneNameStart,input.boneNameLength);
+        InsertBytes(boneNameStart,newStringSize,0);
+        WriteWString(boneNameStart,s);
+        input.boneNameLength = newStringSize;
+    
+        //Find string index of the old bone name
+        local int oldBoneIndex = -999;
+        local int existingBoneIndex = -999;//Check if the bone name being entered already exists
+        local int i;
+        local uint usageCount = 0;//Count the number of times a bone name is used
+        if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+        {
+            //Loop through every bone name to find the index of the name
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+            {
+                //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                {
+                    oldBoneIndex = i;
+                    //break;
+                }
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == s)
+                {
+                    existingBoneIndex = i;
+                }
+            }
+        }
+        
+        if (oldBoneIndex != -999)
+        {
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+            {
+                //Check how many times the bone being replaced is used
+                if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                {
+                    usageCount += 1;
+                }
+            }
+        
+        }
+        if (existingBoneIndex != -999)//If bone name was changed to something that already exists, use the existing string index
+        {
+            if (usageCount == 1)//If the old bone name is only used once, remove it
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])); 
+            }
+            else//If the old bone name is used more than once, only change the bone index
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+            }
+        }
+        else//This runs if the new bone name provided doesn't already exist
+        {
+
+        
+            if (usageCount != 1)
+            {
+                //If the old bone name is used more than once or non existent, insert a new bone
+        
+                //Shift all other bone indices by 1
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex >= 0)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex += 1;
+                    }
+                    
+                    //Set new bone index to 0
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = 0;
+                    }
+        
+                }
+                //Insert new bone value at start
+                InsertBytes(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),8,0);
+                WriteUInt(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),hash_wide(s));
+                
+        
+                //Determine start of bone strings
+                local int boneStringStartPos = 0;
+                if (parentof(parentof(parentof(input))).header.boneCount == 0)
+                {
+                    if (parentof(parentof(parentof(input))).header.actionCount != 0)
+                    {
+                        boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.action_name[0]);
+                    }
+                    else
+                    {
+                        if (parentof(parentof(parentof(input))).header.fieldParameterCount != 0)
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.field_parameter_name[0]);
+                        }
+                        else
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.efx_name[0]);
+                        }
+                    }
+                }
+                else
+                {
+                    boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.bone_name[0]);
+                }
+                
+                //Insert new bone entry strings 
+                InsertBytes(boneStringStartPos,sizeof(s)+newStringSize,0);
+                WriteString(boneStringStartPos,s);
+                WriteWString(boneStringStartPos+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.boneCount += 1;
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+            else
+            {
+                //If the name is only used once, replace the string
+                
+                
+                //Set bone name hash
+                parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex].boneNameHash = hash_wide(s);
+                
+                //Remove old bone name
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+                if (existingBoneIndex != -999)
+                {
+    
+                }
+                //Insert new bone name in place of old one
+                InsertBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(s)+newStringSize,0);
+                WriteString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),s);
+                WriteWString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+        }
+    }
+    else//Unparent
+    {
+        if (input.boneName != "")
+        {
+            //Remove bone name from attribute and replace it with null terminator
+            DeleteBytes(boneNameStart,input.boneNameLength);
+            InsertBytes(boneNameStart,2,0);
+            input.boneNameLength = 2;
+        
+            //Find string index of the old bone name
+            local int oldBoneIndex = -999;
+            local int i;
+            local uint usageCount = 0;//Count the number of times a bone name is used
+            if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+            {
+                //Loop through every bone name to find the index of the name
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+                {
+                    //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                    if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                    {
+                        oldBoneIndex = i;
+                        break;
+                    }
+                }
+            }
+        
+            if (oldBoneIndex != -999)
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Check how many times the bone being replaced is used
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                    {
+                        usageCount += 1;
+                    }
+                }
+            
+            }
+            
+            
+
+            if (usageCount == 1)//If the bone name is only used once, it can be removed
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+            }
+            else//Only change bone index without removing anything
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    }  
+                }
+            }
+        }
+    }
+    //RunTemplate();//Crashes, so have to use message to tell to reload
+    MessageBox( idOk, "Reload Required","Changes applied to file. Press F5 to reload the template.");
+	return;
+}
+
+void WriteBoneAttractor(Attractor& input, string s){
+    local uint boneNameStart = startof(input.boneName);
+    local uint newStringSize = sizeof(s)*2;
+    local string oldBoneName = input.boneName;
+    if (s != "None" && s != "\"None\"" && s != "")
+    {
+        //Remove bone name from attribute and replace it with the new name
+        DeleteBytes(boneNameStart,input.boneNameLength);
+        InsertBytes(boneNameStart,newStringSize,0);
+        WriteWString(boneNameStart,s);
+        input.boneNameLength = newStringSize;
+    
+        //Find string index of the old bone name
+        local int oldBoneIndex = -999;
+        local int existingBoneIndex = -999;//Check if the bone name being entered already exists
+        local int i;
+        local uint usageCount = 0;//Count the number of times a bone name is used
+        if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+        {
+            //Loop through every bone name to find the index of the name
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+            {
+                //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                {
+                    oldBoneIndex = i;
+                    //break;
+                }
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == s)
+                {
+                    existingBoneIndex = i;
+                }
+            }
+        }
+        
+        if (oldBoneIndex != -999)
+        {
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+            {
+                //Check how many times the bone being replaced is used
+                if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                {
+                    usageCount += 1;
+                }
+            }
+        
+        }
+        if (existingBoneIndex != -999)//If bone name was changed to something that already exists, use the existing string index
+        {
+            if (usageCount == 1)//If the old bone name is only used once, remove it
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])); 
+            }
+            else//If the old bone name is used more than once, only change the bone index
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+            }
+        }
+        else//This runs if the new bone name provided doesn't already exist
+        {
+
+        
+            if (usageCount != 1)
+            {
+                //If the old bone name is used more than once or non existent, insert a new bone
+        
+                //Shift all other bone indices by 1
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex >= 0)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex += 1;
+                    }
+                    
+                    //Set new bone index to 0
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = 0;
+                    }
+        
+                }
+                //Insert new bone value at start
+                InsertBytes(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),8,0);
+                WriteUInt(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),hash_wide(s));
+                
+        
+                //Determine start of bone strings
+                local int boneStringStartPos = 0;
+                if (parentof(parentof(parentof(input))).header.boneCount == 0)
+                {
+                    if (parentof(parentof(parentof(input))).header.actionCount != 0)
+                    {
+                        boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.action_name[0]);
+                    }
+                    else
+                    {
+                        if (parentof(parentof(parentof(input))).header.fieldParameterCount != 0)
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.field_parameter_name[0]);
+                        }
+                        else
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.efx_name[0]);
+                        }
+                    }
+                }
+                else
+                {
+                    boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.bone_name[0]);
+                }
+                
+                //Insert new bone entry strings 
+                InsertBytes(boneStringStartPos,sizeof(s)+newStringSize,0);
+                WriteString(boneStringStartPos,s);
+                WriteWString(boneStringStartPos+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.boneCount += 1;
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+            else
+            {
+                //If the name is only used once, replace the string
+                
+                
+                //Set bone name hash
+                parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex].boneNameHash = hash_wide(s);
+                
+                //Remove old bone name
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+                if (existingBoneIndex != -999)
+                {
+    
+                }
+                //Insert new bone name in place of old one
+                InsertBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(s)+newStringSize,0);
+                WriteString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),s);
+                WriteWString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+        }
+    }
+    else//Unparent
+    {
+        if (input.boneName != "")
+        {
+            //Remove bone name from attribute and replace it with null terminator
+            DeleteBytes(boneNameStart,input.boneNameLength);
+            InsertBytes(boneNameStart,2,0);
+            input.boneNameLength = 2;
+        
+            //Find string index of the old bone name
+            local int oldBoneIndex = -999;
+            local int i;
+            local uint usageCount = 0;//Count the number of times a bone name is used
+            if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+            {
+                //Loop through every bone name to find the index of the name
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+                {
+                    //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                    if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                    {
+                        oldBoneIndex = i;
+                        break;
+                    }
+                }
+            }
+        
+            if (oldBoneIndex != -999)
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Check how many times the bone being replaced is used
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                    {
+                        usageCount += 1;
+                    }
+                }
+            
+            }
+            
+            
+
+            if (usageCount == 1)//If the bone name is only used once, it can be removed
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+            }
+            else//Only change bone index without removing anything
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    }  
+                }
+            }
+        }
+    }
+    //RunTemplate();//Crashes, so have to use message to tell to reload
+    MessageBox( idOk, "Reload Required","Changes applied to file. Press F5 to reload the template.");
+	return;
+}
+
+void WriteBoneVanishArea3D(VanishArea3D& input, string s){
+    local uint boneNameStart = startof(input.boneName);
+    local uint newStringSize = sizeof(s)*2;
+    local string oldBoneName = input.boneName;
+    if (s != "None" && s != "\"None\"" && s != "")
+    {
+        //Remove bone name from attribute and replace it with the new name
+        DeleteBytes(boneNameStart,input.boneNameLength);
+        InsertBytes(boneNameStart,newStringSize,0);
+        WriteWString(boneNameStart,s);
+        input.boneNameLength = newStringSize;
+    
+        //Find string index of the old bone name
+        local int oldBoneIndex = -999;
+        local int existingBoneIndex = -999;//Check if the bone name being entered already exists
+        local int i;
+        local uint usageCount = 0;//Count the number of times a bone name is used
+        if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+        {
+            //Loop through every bone name to find the index of the name
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+            {
+                //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                {
+                    oldBoneIndex = i;
+                    //break;
+                }
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == s)
+                {
+                    existingBoneIndex = i;
+                }
+            }
+        }
+        
+        if (oldBoneIndex != -999)
+        {
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+            {
+                //Check how many times the bone being replaced is used
+                if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                {
+                    usageCount += 1;
+                }
+            }
+        
+        }
+        if (existingBoneIndex != -999)//If bone name was changed to something that already exists, use the existing string index
+        {
+            if (usageCount == 1)//If the old bone name is only used once, remove it
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])); 
+            }
+            else//If the old bone name is used more than once, only change the bone index
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+            }
+        }
+        else//This runs if the new bone name provided doesn't already exist
+        {
+
+        
+            if (usageCount != 1)
+            {
+                //If the old bone name is used more than once or non existent, insert a new bone
+        
+                //Shift all other bone indices by 1
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex >= 0)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex += 1;
+                    }
+                    
+                    //Set new bone index to 0
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = 0;
+                    }
+        
+                }
+                //Insert new bone value at start
+                InsertBytes(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),8,0);
+                WriteUInt(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),hash_wide(s));
+                
+        
+                //Determine start of bone strings
+                local int boneStringStartPos = 0;
+                if (parentof(parentof(parentof(input))).header.boneCount == 0)
+                {
+                    if (parentof(parentof(parentof(input))).header.actionCount != 0)
+                    {
+                        boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.action_name[0]);
+                    }
+                    else
+                    {
+                        if (parentof(parentof(parentof(input))).header.fieldParameterCount != 0)
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.field_parameter_name[0]);
+                        }
+                        else
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.efx_name[0]);
+                        }
+                    }
+                }
+                else
+                {
+                    boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.bone_name[0]);
+                }
+                
+                //Insert new bone entry strings 
+                InsertBytes(boneStringStartPos,sizeof(s)+newStringSize,0);
+                WriteString(boneStringStartPos,s);
+                WriteWString(boneStringStartPos+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.boneCount += 1;
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+            else
+            {
+                //If the name is only used once, replace the string
+                
+                
+                //Set bone name hash
+                parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex].boneNameHash = hash_wide(s);
+                
+                //Remove old bone name
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+                if (existingBoneIndex != -999)
+                {
+    
+                }
+                //Insert new bone name in place of old one
+                InsertBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(s)+newStringSize,0);
+                WriteString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),s);
+                WriteWString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+        }
+    }
+    else//Unparent
+    {
+        if (input.boneName != "")
+        {
+            //Remove bone name from attribute and replace it with null terminator
+            DeleteBytes(boneNameStart,input.boneNameLength);
+            InsertBytes(boneNameStart,2,0);
+            input.boneNameLength = 2;
+        
+            //Find string index of the old bone name
+            local int oldBoneIndex = -999;
+            local int i;
+            local uint usageCount = 0;//Count the number of times a bone name is used
+            if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+            {
+                //Loop through every bone name to find the index of the name
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+                {
+                    //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                    if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                    {
+                        oldBoneIndex = i;
+                        break;
+                    }
+                }
+            }
+        
+            if (oldBoneIndex != -999)
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Check how many times the bone being replaced is used
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                    {
+                        usageCount += 1;
+                    }
+                }
+            
+            }
+            
+            
+
+            if (usageCount == 1)//If the bone name is only used once, it can be removed
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+            }
+            else//Only change bone index without removing anything
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    }  
+                }
+            }
+        }
+    }
+    //RunTemplate();//Crashes, so have to use message to tell to reload
+    MessageBox( idOk, "Reload Required","Changes applied to file. Press F5 to reload the template.");
+	return;
+}
+
+void WriteBoneTypeStrainRibbon(TypeStrainRibbon& input, string s){
+    local uint boneNameStart = startof(input.boneName);
+    local uint newStringSize = sizeof(s)*2;
+    local string oldBoneName = input.boneName;
+    if (s != "None" && s != "\"None\"" && s != "")
+    {
+        //Remove bone name from attribute and replace it with the new name
+        DeleteBytes(boneNameStart,input.boneNameLength);
+        InsertBytes(boneNameStart,newStringSize,0);
+        WriteWString(boneNameStart,s);
+        input.boneNameLength = newStringSize;
+    
+        //Find string index of the old bone name
+        local int oldBoneIndex = -999;
+        local int existingBoneIndex = -999;//Check if the bone name being entered already exists
+        local int i;
+        local uint usageCount = 0;//Count the number of times a bone name is used
+        if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+        {
+            //Loop through every bone name to find the index of the name
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+            {
+                //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                {
+                    oldBoneIndex = i;
+                    //break;
+                }
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == s)
+                {
+                    existingBoneIndex = i;
+                }
+            }
+        }
+        
+        if (oldBoneIndex != -999)
+        {
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+            {
+                //Check how many times the bone being replaced is used
+                if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                {
+                    usageCount += 1;
+                }
+            }
+        
+        }
+        if (existingBoneIndex != -999)//If bone name was changed to something that already exists, use the existing string index
+        {
+            if (usageCount == 1)//If the old bone name is only used once, remove it
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])); 
+            }
+            else//If the old bone name is used more than once, only change the bone index
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+            }
+        }
+        else//This runs if the new bone name provided doesn't already exist
+        {
+
+        
+            if (usageCount != 1)
+            {
+                //If the old bone name is used more than once or non existent, insert a new bone
+        
+                //Shift all other bone indices by 1
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex >= 0)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex += 1;
+                    }
+                    
+                    //Set new bone index to 0
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = 0;
+                    }
+        
+                }
+                //Insert new bone value at start
+                InsertBytes(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),8,0);
+                WriteUInt(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),hash_wide(s));
+                
+        
+                //Determine start of bone strings
+                local int boneStringStartPos = 0;
+                if (parentof(parentof(parentof(input))).header.boneCount == 0)
+                {
+                    if (parentof(parentof(parentof(input))).header.actionCount != 0)
+                    {
+                        boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.action_name[0]);
+                    }
+                    else
+                    {
+                        if (parentof(parentof(parentof(input))).header.fieldParameterCount != 0)
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.field_parameter_name[0]);
+                        }
+                        else
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.efx_name[0]);
+                        }
+                    }
+                }
+                else
+                {
+                    boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.bone_name[0]);
+                }
+                
+                //Insert new bone entry strings 
+                InsertBytes(boneStringStartPos,sizeof(s)+newStringSize,0);
+                WriteString(boneStringStartPos,s);
+                WriteWString(boneStringStartPos+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.boneCount += 1;
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+            else
+            {
+                //If the name is only used once, replace the string
+                
+                
+                //Set bone name hash
+                parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex].boneNameHash = hash_wide(s);
+                
+                //Remove old bone name
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+                if (existingBoneIndex != -999)
+                {
+    
+                }
+                //Insert new bone name in place of old one
+                InsertBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(s)+newStringSize,0);
+                WriteString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),s);
+                WriteWString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+        }
+    }
+    else//Unparent
+    {
+        if (input.boneName != "")
+        {
+            //Remove bone name from attribute and replace it with null terminator
+            DeleteBytes(boneNameStart,input.boneNameLength);
+            InsertBytes(boneNameStart,2,0);
+            input.boneNameLength = 2;
+        
+            //Find string index of the old bone name
+            local int oldBoneIndex = -999;
+            local int i;
+            local uint usageCount = 0;//Count the number of times a bone name is used
+            if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+            {
+                //Loop through every bone name to find the index of the name
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+                {
+                    //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                    if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                    {
+                        oldBoneIndex = i;
+                        break;
+                    }
+                }
+            }
+        
+            if (oldBoneIndex != -999)
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Check how many times the bone being replaced is used
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                    {
+                        usageCount += 1;
+                    }
+                }
+            
+            }
+            
+            
+
+            if (usageCount == 1)//If the bone name is only used once, it can be removed
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+            }
+            else//Only change bone index without removing anything
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    }  
+                }
+            }
+        }
+    }
+    //RunTemplate();//Crashes, so have to use message to tell to reload
+    MessageBox( idOk, "Reload Required","Changes applied to file. Press F5 to reload the template.");
+	return;
+}
+
+void WriteBoneTypeLightning3D(TypeLightning3D& input, string s){
+    local uint boneNameStart = startof(input.boneName);
+    local uint newStringSize = sizeof(s)*2;
+    local string oldBoneName = input.boneName;
+    if (s != "None" && s != "\"None\"" && s != "")
+    {
+        //Remove bone name from attribute and replace it with the new name
+        DeleteBytes(boneNameStart,input.boneNameLength);
+        InsertBytes(boneNameStart,newStringSize,0);
+        WriteWString(boneNameStart,s);
+        input.boneNameLength = newStringSize;
+    
+        //Find string index of the old bone name
+        local int oldBoneIndex = -999;
+        local int existingBoneIndex = -999;//Check if the bone name being entered already exists
+        local int i;
+        local uint usageCount = 0;//Count the number of times a bone name is used
+        if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+        {
+            //Loop through every bone name to find the index of the name
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+            {
+                //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                {
+                    oldBoneIndex = i;
+                    //break;
+                }
+                if (parentof(parentof(parentof(input))).strings.bone_name[i].str == s)
+                {
+                    existingBoneIndex = i;
+                }
+            }
+        }
+        
+        if (oldBoneIndex != -999)
+        {
+            for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+            {
+                //Check how many times the bone being replaced is used
+                if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                {
+                    usageCount += 1;
+                }
+            }
+        
+        }
+        if (existingBoneIndex != -999)//If bone name was changed to something that already exists, use the existing string index
+        {
+            if (usageCount == 1)//If the old bone name is only used once, remove it
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])); 
+            }
+            else//If the old bone name is used more than once, only change the bone index
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set attribute bone index to the existing bone index
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = existingBoneIndex;
+                    } 
+                }
+            }
+        }
+        else//This runs if the new bone name provided doesn't already exist
+        {
+
+        
+            if (usageCount != 1)
+            {
+                //If the old bone name is used more than once or non existent, insert a new bone
+        
+                //Shift all other bone indices by 1
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex >= 0)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex += 1;
+                    }
+                    
+                    //Set new bone index to 0
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = 0;
+                    }
+        
+                }
+                //Insert new bone value at start
+                InsertBytes(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),8,0);
+                WriteUInt(startof(parentof(parentof(parentof(input))).subheader) + (parentof(parentof(parentof(input))).header.expressionParameterCount*24),hash_wide(s));
+                
+        
+                //Determine start of bone strings
+                local int boneStringStartPos = 0;
+                if (parentof(parentof(parentof(input))).header.boneCount == 0)
+                {
+                    if (parentof(parentof(parentof(input))).header.actionCount != 0)
+                    {
+                        boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.action_name[0]);
+                    }
+                    else
+                    {
+                        if (parentof(parentof(parentof(input))).header.fieldParameterCount != 0)
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.field_parameter_name[0]);
+                        }
+                        else
+                        {
+                            boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.efx_name[0]);
+                        }
+                    }
+                }
+                else
+                {
+                    boneStringStartPos = startof(parentof(parentof(parentof(input))).strings.bone_name[0]);
+                }
+                
+                //Insert new bone entry strings 
+                InsertBytes(boneStringStartPos,sizeof(s)+newStringSize,0);
+                WriteString(boneStringStartPos,s);
+                WriteWString(boneStringStartPos+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.boneCount += 1;
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+            else
+            {
+                //If the name is only used once, replace the string
+                
+                
+                //Set bone name hash
+                parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex].boneNameHash = hash_wide(s);
+                
+                //Remove old bone name
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+                if (existingBoneIndex != -999)
+                {
+    
+                }
+                //Insert new bone name in place of old one
+                InsertBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(s)+newStringSize,0);
+                WriteString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),s);
+                WriteWString(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex])+sizeof(s),s);
+                parentof(parentof(parentof(input))).header.entryLength += sizeof(s)+newStringSize;
+            }
+        }
+    }
+    else//Unparent
+    {
+        if (input.boneName != "")
+        {
+            //Remove bone name from attribute and replace it with null terminator
+            DeleteBytes(boneNameStart,input.boneNameLength);
+            InsertBytes(boneNameStart,2,0);
+            input.boneNameLength = 2;
+        
+            //Find string index of the old bone name
+            local int oldBoneIndex = -999;
+            local int i;
+            local uint usageCount = 0;//Count the number of times a bone name is used
+            if (parentof(parentof(parentof(input))).header.boneCount > 0)//Get efxr header
+            {
+                //Loop through every bone name to find the index of the name
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneCount;i++)
+                {
+                    //Printf("%s\n",parentof(parentof(parentof(input))).strings.bone_name[i].str);
+                    if (parentof(parentof(parentof(input))).strings.bone_name[i].str == oldBoneName)
+                    {
+                        oldBoneIndex = i;
+                        break;
+                    }
+                }
+            }
+        
+            if (oldBoneIndex != -999)
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Check how many times the bone being replaced is used
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex == oldBoneIndex)
+                    {
+                        usageCount += 1;
+                    }
+                }
+            
+            }
+            
+            
+
+            if (usageCount == 1)//If the bone name is only used once, it can be removed
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Shift higher bone indices backwards
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex > oldBoneIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex -= 1;
+                    }
+                    //Set attribute bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    } 
+                }
+                //Delete bone value
+                DeleteBytes(startof(parentof(parentof(parentof(input))).subheader.boneValues.boneValue[oldBoneIndex]),8);
+                //Remove bone name
+                parentof(parentof(parentof(input))).header.boneCount -= 1;
+                parentof(parentof(parentof(input))).header.entryLength -= sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]);
+                DeleteBytes(startof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]),sizeof(parentof(parentof(parentof(input))).strings.bone_name[oldBoneIndex]));
+                
+            }
+            else//Only change bone index without removing anything
+            {
+                for(i=0;i<parentof(parentof(parentof(input))).header.boneAttributeEntryCount;i++)
+                {
+                    //Set bone index to -1
+                    if (parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].attributeIndex == input.currentAttributeIndex && parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].entryIndex == parentof(input).currentEntryIndex)
+                    {
+                        parentof(parentof(parentof(input))).subheader.boneAttributeRelations.relation[i].boneNameIndex = -1;
+                    }  
+                }
+            }
+        }
+    }
+    //RunTemplate();//Crashes, so have to use message to tell to reload
+    MessageBox( idOk, "Reload Required","Changes applied to file. Press F5 to reload the template.");
+	return;
+}
+//DISPLAY
+Printf("RE Engine EFX Template V%i\nhttps://github.com/NSACloud/RE-Engine-EFX-Template\n\nSet the character set to UTF-8 in View > Character Set.\n\n",TEMPLATEVERSION);
+if(ReadUInt() == 4281166)
+{
+    EFXPreset preset<optimize = false>;
+    Printf("EFX Preset File: %s\n",preset.presetInfo.presetName.str);
+    Printf("EFX Version: %i\n\n",preset.header.efxVersion);
+}
+else
+{
+    EFXR main_efxr<optimize = false>;
+}
+Printf("Template finished executing.");
+
+
+/* EFX Enums that aren't included in structs yet
+namespace via::effect::detail {
+    enum ExpressionOperator {
+        Addition = 0,
+        Subtraction = 1,
+        Multiplication = 2,
+        Division = 3,
+        Assign = 4,
+        ForceWord = 4294967295,
+    };
+}
+namespace via::effect::detail {
+    enum PtClipAttribute {
+        BindToLife = 1,
+    };
+}
+namespace via::effect::detail {
+    enum PlayOrder {
+        Forward = 0,
+        Reverse = 1,
+        RandomReverse = 2,
+    };
+}
+namespace via::effect::detail {
+    enum PtColorOperator {
+        Overwrite = 0,
+        Multiply = 1,
+    };
+}
+namespace via::effect::detail {
+    enum LifeState {
+        Unknown = 0,
+        Wait = 1,
+        Initialize = 2,
+        Appear = 3,
+        Keep = 4,
+        KeepHold = 5,
+        Vanish = 6,
+        Terminate = 7,
+    };
+}
+namespace via::effect::detail {
+    enum BlendType {
+        AlphaBlend = 0,
+        Physical = 1,
+        AddContrast = 2,
+        EdgeBlend = 3,
+    };
+}
+namespace via::effect::detail {
+    enum FlipType {
+        None = 0,
+        Flip = 1,
+        RandomFlip = 2,
+    };
+}
+namespace via::effect::detail {
+    enum LuminanceBleedType {
+        None = 0,
+        Transparent = 1,
+        PostTransparent = 2,
+        ForceWord = 3,
+    };
+}
+namespace via::effect::detail {
+    enum LuminanceBleedSamplingType {
+        Default = 0,
+        NoSubpixel = 1,
+    };
+}
+namespace via::effect::detail {
+    enum StretchType {
+        Time = 0,
+        Distance = 1,
+    };
+}
+namespace via::effect::detail {
+    enum DivideAxisType {
+        X = 0,
+        Y = 1,
+        Z = 2,
+    };
+}
+namespace via::effect::detail {
+    enum EffectBoundsType {
+        None = 0,
+        Sphere = 1,
+        AABB = 2,
+        OBB = 3,
+    };
+}
+namespace via::effect::detail {
+    enum Shape3DType {
+        Box = 0,
+        Sphere = 1,
+        Cylinder = 2,
+    };
+}
+namespace via::effect::detail {
+    enum DistortionType {
+        Blur = 0,
+        Refract = 1,
+        BlurTexture = 2,
+    };
+}
+namespace via::effect::detail {
+    enum ExternType {
+        Float = 0,
+        Color = 1,
+        LimitedFloat = 2,
+        Bool = 3,
+    };
+}
+namespace via::effect::detail {
+    enum LinePreset {
+        Follow = 0,
+        Length = 1,
+        Chain = 2,
+    };
+}
+namespace via::effect::detail {
+    enum FrontDirection {
+        X = 0,
+        Y = 1,
+        Z = 2,
+    };
+}
+namespace via::effect::detail {
+    enum NodeBillboardShapeType {
+        Box = 0,
+        Sphere = 1,
+        Num = 2,
+    };
+}
+namespace via::effect::detail {
+    enum FrontDirectionType {
+        ParallelCamera = 0,
+        ToCamera = 1,
+    };
+}
+namespace via::effect::detail {
+    enum EmitterUpdateStatus {
+        Idle = 0,
+        Running = 1,
+        RunUntilDie = 2,
+    };
+}
+namespace via::effect::detail::EffectExecutor {
+    enum ResourceType {
+        Handle = 0,
+        Stream = 1,
+        Data = 2,
+    };
+}
+namespace via::effect::detail {
+    enum ShadowType {
+        None = 0,
+        Enable = 1,
+        ShadowOnly = 2,
+        Translucent = 3,
+        TranslucentShadowOnly = 4,
+    };
+}
+namespace via::effect::detail {
+    enum CullingTarget {
+        Emitter = 0,
+        Particle = 1,
+    };
+}
+namespace via::effect::detail {
+    enum PtLifeStatus {
+        Initialize = 0,
+        Appear = 1,
+        Keep = 2,
+        Vanish = 3,
+        Terminate = 4,
+        Unknown = 4294967295,
+    };
+}
+namespace via::effect::detail {
+    enum EmitterFlags {
+        Root = 1,
+        Ungrouped = 2,
+    };
+}
+namespace via::effect::detail {
+    enum RotateAnimFlagType {
+        EnableReverseRandom = 1,
+    };
+}
+namespace via::effect::detail {
+    enum PlayType {
+        Pause = 0,
+        Loop = 1,
+        Finish = 2,
+        Play = 3,
+    };
+}
+namespace via::effect::detail {
+    enum EmitterExecuteState {
+        Update = 1,
+        Reset = 2,
+        Kill = 4,
+        Stop = 8,
+    };
+}
+namespace via::effect::detail {
+    enum GroupLevel {
+        GroupLevel_0 = 0,
+        GroupLevel_1 = 1,
+        GroupLevel_Num = 2,
+    };
+}
+namespace via::effect::detail {
+    enum SourceSinkType {
+        Circle = 0,
+        Rectangle = 1,
+    };
+}
+namespace via::effect::detail {
+    enum LightingType {
+        None = 0,
+        Vertex = 1,
+        Vertex2x2 = 2,
+        Vertex4x4 = 3,
+        Vertex8x8 = 4,
+        ForceWord = 4294967295,
+    };
+}
+namespace via::effect::detail {
+    enum VelocityType {
+        Direction = 0,
+        Normal = 1,
+        Radial = 2,
+        Spread = 3,
+        ScreenSpace = 4,
+    };
+}
+namespace via::effect::detail {
+    enum Repeat {
+        None = 0,
+        U = 1,
+        V = 2,
+    };
+}
+namespace via::effect::detail {
+    enum CullingMode {
+        Draw = 0,
+        DrawAndMove = 1,
+    };
+}
+namespace via::effect::detail {
+    enum Shape2DType {
+        Square = 0,
+        Circle = 1,
+    };
+}
+namespace via::effect::detail {
+    enum EmitterDimType {
+        EmitterDimType_2D = 0,
+        EmitterDimType_3D = 1,
+    };
+}
+namespace via::effect::detail {
+    enum EmitterStateType {
+        Idle = 0,
+        Start = 1,
+        Running = 2,
+        Stop = 3,
+        Kill = 4,
+    };
+}
+namespace via::effect::detail {
+    enum ClipKeyType {
+        Bool = 0,
+        Int32 = 1,
+        Int64 = 2,
+        UInt32 = 3,
+        UInt64 = 4,
+        Float = 5,
+        Double = 6,
+    };
+}
+namespace via::effect::detail {
+    enum OrientDirectionType {
+        None = 0,
+        Forward = 1,
+        Backward = 2,
+    };
+}
+namespace via::effect::detail {
+    enum RotationOrder {
+        XYZ = 0,
+        XZY = 1,
+        YXZ = 2,
+        YZX = 3,
+        ZXY = 4,
+        ZYX = 5,
+    };
+}
+namespace via::effect::detail {
+    enum GpuBlendType {
+        AlphaBlend = 0,
+        Physical = 1,
+        AddContrast = 2,
+        EdgeBlend = 3,
+        Multiply = 4,
+    };
+}
+namespace via::effect::detail {
+    enum MaterialParameterType {
+        None = 0,
+        Float = 1,
+        Range = 2,
+        Texture = 3,
+    };
+}
+namespace via::effect::detail {
+    enum AxisType {
+        PositiveX = 0,
+        PositiveY = 1,
+        PositiveZ = 2,
+        NegativeX = 3,
+        NegativeY = 4,
+        NegativeZ = 5,
+    };
+}
+namespace via::effect::detail {
+    enum Rotate90 {
+        None = 0,
+        Rotate = 1,
+        RandomRotate = 2,
+    };
+}
+namespace via::effect::detail {
+    enum EmitterContextType {
+        Unknown = 0,
+        Billboard2D = 1,
+        Billboard3D = 2,
+        RibbonFollow = 3,
+        RibbonLength = 4,
+        RibbonChain = 5,
+        Mesh = 6,
+        NodeBillboard = 7,
+        StrainRibbon = 8,
+        NoDraw = 9,
+        Polygon = 10,
+        RibbonTrail = 11,
+        PolygonTrail = 12,
+        GpuBillboard = 13,
+        RibbonFixEnd = 14,
+        GpuRibbonFollow = 15,
+        RibbonLightweight = 16,
+        Lightning3D = 17,
+    };
+}
+namespace via::effect::detail {
+    enum MieLightingType {
+        None = 0,
+        Vertex = 1,
+        Vertex2x2 = 2,
+        Vertex4x4 = 3,
+        Vertex8x8 = 4,
+        Vertex16x16 = 5,
+        Vertex32x32 = 6,
+        ForceWord = 4294967295,
+    };
+}
+namespace via::effect::detail {
+    enum EmitterParticleType {
+        Unknown = 0,
+        Billboard = 1,
+        Mesh = 2,
+        RibbonFollow = 3,
+        RibbonLength = 4,
+        RibbonChain = 5,
+        FluidEmitter = 6,
+        NodeBillboardGPU = 7,
+        StrainRibbon = 8,
+        NoDraw = 9,
+        Polygon = 10,
+        RibbonTrail = 11,
+        PolygonTrail = 12,
+        BillboardGPU = 13,
+        RibbonFixEnd = 14,
+        RibbonLightweight = 15,
+        RibbonFollowGPU = 16,
+        Lightning = 17,
+    };
+}
+*/

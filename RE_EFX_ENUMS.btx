@@ -1,0 +1,18 @@
+typedef enum <uint>
+{
+    ExpressionOperator_Addition=0,
+    ExpressionOperator_Subtraction=1,
+    ExpressionOperator_Multiplication=2,
+    ExpressionOperator_Division=3,
+    ExpressionOperator_Assign=4,
+    ExpressionOperator_ForceWord=4294967295
+}ExpressionOperator;
+
+typedef enum <uint>
+{
+    BlendType_AlphaBlend=0,
+    BlendType_Physical=1,
+    BlendType_AddContrast=2,
+    BlendType_EdgeBlend=3,
+    BlendType_Multiply=4,
+}BlendType;

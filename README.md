@@ -1,19 +1,12 @@
 # RE4 EFX Template
 EFX 010 template for Resident Evil 4 Remake.
 
-This is a beta release. Many structs have not been mapped for RE4 yet.
+**UPDATE 4/3/2025**
 
-However, most of the structs have already been mapped for Monster Hunter Rise. It's just a case of deducing how the item enum has shifted.
+Template structure rewritten. Now supports most efx files for RE4.
 
-The template will print an item type number when it runs into a struct that hasn't been mapped yet.
+Note that this version of the efx template is temporary and will soon become obsolete when I release the new version with support for MH Wilds and more.
 
-If the item type number is a sane number (<255), you just have to figure out what that number was on the [MHR EFX template](https://github.com/NSACloud/MHR-EFX-Template) and how it's been changed.
-
-If you find out what any of the unknowns do, submit a pull request or an issue and I'll add the changes.
-
-Be sure to change the character set to UTF-8 in View > Character Set or text will be garbled.
-
-Read the template for notes. 
 
 ## EFX Color Change Script
 ![image](https://user-images.githubusercontent.com/46909075/232143830-d8a3bfac-7683-40b1-a830-99ce3a3a7e44.png)
